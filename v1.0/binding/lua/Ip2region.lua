@@ -1,11 +1,4 @@
---[[
-Ip2region lua binding
-
-@author chenxin<chenxin619315@gmail.com>
-@date   2018/10/02
-]]--
-
-require("bit32");
+local bit32 = require "bitop".bit32
 
 local INDEX_BLOCK_LENGTH  = 12;
 local TOTAL_HEADER_LENGTH = 8192;
@@ -13,11 +6,11 @@ local _M = {
     dbFile = "",
     dbFileHandler = "",
     dbBinStr = "",
-    HeaderSip = "", 
+    HeaderSip = "",
     HeaderPtr = "",
     headerLen = 0,
     firstIndexPtr = 0,
-    lastIndexPtr = 0, 
+    lastIndexPtr = 0,
     totalBlocks = 0
 };
 
@@ -128,6 +121,12 @@ internal function to get the whole content of a file
 @return String
 ]]--
 function get_file_contents(file)
+    local fd = io.open(file, "r");
+    if fd then
+        io.close(fd);
+    else
+        return nil;
+    end
     local fi = io.input(file);
     if ( not fi ) then
         return nil;
@@ -313,7 +312,7 @@ function _M:btreeSearch(ip)
 
         self.dbFileHandler:seek("set", 8);
         local buffer = self.dbFileHandler:read(TOTAL_HEADER_LENGTH);
-        
+
         -- fill the header
         local i = 0;
         local idx = 0;
@@ -333,10 +332,9 @@ function _M:btreeSearch(ip)
 
         self.headerLen = idx;
     end
-    
 
     -- 1. define the index block with the binary search
-    local l = 0; 
+    local l = 0;
     local h = self.headerLen;
     local sptr = 0;
     local eptr = 0;
@@ -351,10 +349,8 @@ function _M:btreeSearch(ip)
                 sptr = self.HeaderPtr[m  ];
                 eptr = self.HeaderPtr[m+1];
             end
-            
             break;
         end
-        
         -- less then the middle value
         if ( ip < self.HeaderSip[m] ) then
             if ( m == 0 ) then
@@ -380,10 +376,8 @@ function _M:btreeSearch(ip)
             l = m + 1;
         end
     end
-    
     -- match nothing just stop it
     if ( sptr == 0 ) then return nil; end
-    
     -- 2. search the index blocks to define the data
     self.dbFileHandler:seek("set", sptr);
     local blockLen = eptr - sptr;
@@ -408,14 +402,14 @@ function _M:btreeSearch(ip)
             end
         end
     end
-    
+
     -- not matched
     if ( dataPtr == 0 ) then return nil; end
-    
+
     -- 3. get the data
     local dataLen = bit32.band(bit32.rshift(dataPtr, 24), 0xFF);
     dataPtr = bit32.band(dataPtr, 0x00FFFFFF);
-    
+
     self.dbFileHandler:seek("set", dataPtr);
     local data = self.dbFileHandler:read(dataLen);
 
@@ -438,6 +432,5 @@ function _M.close(self)
         self.dbBinStr = nil;
     end
 end
-
 
 return _M;

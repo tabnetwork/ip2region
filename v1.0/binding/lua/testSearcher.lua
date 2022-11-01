@@ -53,13 +53,14 @@ while ( true ) do
     io.write("ip2region>> ");
     io.input(io.stdin);
     local line = io.read();
+    print(line)
     if ( line == nil ) then
         -- do nothing
         break;
     elseif ( line == "quit" ) then
         break;
-    elseif ( ip2region.ip2long(line) == nil ) then
-        print("Invalid ip address=", line);
+    -- elseif ( ip2region.ip2long(line) == nil ) then
+        -- print("Invalid ip address=", line);
     else
         local data;
         local s_time = os.clock();
